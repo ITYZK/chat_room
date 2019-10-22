@@ -165,36 +165,42 @@ client_socks = {}
 solo_socks = {}
 
 while True:
-    
+    #客户端监听
     sock_conn, client_addr = sock_listen.accept()
     sock2_conn, client2_addr = sock2_listen.accept()
-    #接收用户名
-    name_size = sock2_conn.recv(2)
-    name_size = int(name_size.decode().rstrip())
-    recv_size = 0
-    name = b""
-    while recv_size < name_size:
-        tmp_data = sock2_conn.recv(name_size - recv_size)
-        if not tmp_data:
-            break
-        name += tmp_data
-        recv_size += len(tmp_data)
-    else:
-        #存储用户信息
-        print(1,client_addr)
-        print(2,client2_addr)
-        print(name)
-        client_socks[sock_conn]=name.decode()
-        solo_socks[name.decode()]=sock2_conn
-        #更新列表
-        threading.Thread(target=updata_people).start()
 
-        #多人聊天及在线列表
-        threading.Thread(target=client_chat, args=(sock_conn, client_addr)).start()
+    #接收客户端的昵称，并判断是否已存在
+    while True:
+        #接收用户名
+        name_size = sock2_conn.recv(2)
+        name_size = int(name_size.decode().rstrip())
+        recv_size = 0
+        name = b""
+        while recv_size < name_size:
+            tmp_data = sock2_conn.recv(name_size - recv_size)
+            if not tmp_data:
+                break
+            name += tmp_data
+            recv_size += len(tmp_data)
+        else:
+            #存储用户信息
+            if name.decode() not in solo_socks:
+                sock2_conn.send('0'.encode())
+                client_socks[sock_conn]=name.decode()
+                solo_socks[name.decode()]=sock2_conn
+                #更新列表
+                threading.Thread(target=updata_people).start()
 
-        #单人聊天    
-        threading.Thread(target=solo_chat, args=(sock2_conn, client2_addr)).start()
-       
+                #多人聊天及在线列表
+                threading.Thread(target=client_chat, args=(sock_conn, client_addr)).start()
+
+                #单人聊天    
+                threading.Thread(target=solo_chat, args=(sock2_conn, client2_addr)).start()
+                break
+            else: 
+                #返回客户端，用户名已存在
+                sock2_conn.send('1'.encode())
+        
 
     
 

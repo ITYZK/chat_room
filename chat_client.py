@@ -180,12 +180,19 @@ sock.connect(('127.0.0.1',9999))
 sock2 = socket.socket()
 sock2.connect(('127.0.0.1',9998))
 
-#发送名字
-name = "YZK"
-Solo.Solo_name = name
-name_len = "{:<2}".format(len(name.encode())).encode()
-sock2.send(name_len)
-sock2.send(name.encode())
+while True:
+    #发送名字并判断名字是否能用
+    name = input('请输入您的昵称：')
+    Solo.Solo_name = name
+    name_len = "{:<2}".format(len(name.encode())).encode()
+    sock2.send(name_len)
+    sock2.send(name.encode())
+    code = sock2.recv(1)
+    if code.decode() == '0':
+        #用户名可以使用
+        break
+    print('用户名已存在了')
+
 
 mainwnd = tk.Tk()
 mainwnd.title("聊骚专用聊天室")
